@@ -4,6 +4,7 @@ This project explores and performs EDA to identify how information dissemination
  
 ## Requirements
 - Python >= 3.0
+- PyTrends
 - R
 - RStudio
   
