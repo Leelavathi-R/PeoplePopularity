@@ -16,6 +16,7 @@ This project explores and performs EDA to identify how information dissemination
 - Nationality
 - Profession
 - Popular
-  
+
 ## Output: 
-![Demo](people-popularity-prediction.nb.html){:target="_blank"}
+- Training Accuracy: 99.3%
+- Test Accuracy: 99.5%
