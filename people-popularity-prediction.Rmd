@@ -1,0 +1,132 @@
+---
+title: "People-Popularity-Prediction"
+author: "Leelavathi Raja (A20528208)"
+output:
+  html_notebook:
+    toc: yes
+    toc_float: yes
+  html_document:
+    toc: yes
+    df_print: paged
+---
+# Data Loading & Exploration
+```{r}
+people_df <- read.csv('./people-popularity.csv')
+print(head(people_df))
+print(dim(people_df))
+cat(str(people_df))
+print(summary(people_df))
+```
+# Data Cleaning
+## Handling missing values
+```{r}
+print(sum(is.na(people_df$date)))
+print(sum(is.na(people_df$name)))
+print(sum(is.na(people_df$relative_popularity)))
+print(sum(is.na(people_df$nationality)))
+print(sum(is.na(people_df$page_views)))
+rows_with_na <- subset(people_df, is.na(edits))
+print(rows_with_na)
+na_indices <- which(is.na(people_df$edits))
+people_df$edits[na_indices] <- 0
+print(people_df[na_indices,])
+print(sum(is.na(people_df$popular)))
+```
+## Handling duplicate rows
+```{r}
+duplicate_rows <- duplicated(people_df)
+cat("Checking duplicate rows: ",sum(duplicate_rows))
+```
+## Data Type Conversion
+```{r}
+people_df$popular <- factor(people_df$popular)
+people_df$name <- factor(people_df$name)
+people_df$nationality <- factor(people_df$nationality)
+people_df$date <- as.Date(people_df$date, format = "%Y-%m-%d")
+people_df$year <- format(people_df$date,format = "%Y")
+people_df$profession <- factor(people_df$profession)
+str(people_df)
+```
+# Data Normalization
+```{r}
+X_min <- min(people_df$page_views)
+X_max <- max(people_df$page_views)
+people_df$normalized_page_views <- (people_df$page_views - X_min) * (100 / (X_max - X_min))
+print(summary(people_df))
+str(people_df)
+```
+# Data Analysis
+```{r}
+library(ggplot2)
+hist(people_df$relative_popularity, xlab = "relative_popularity", ylab = "Frequency", main="Histogram - relative_popularity")
+ggplot(people_df, mapping=aes(x=popular,y=relative_popularity,fill=popular))+geom_boxplot()
+ggplot(people_df, mapping=aes(x=popular,y=normalized_page_views,fill=popular))+geom_boxplot()
+ggplot(people_df, mapping=aes(x=popular,y=edits,fill=popular))+geom_boxplot()
+#corPlot(people_df,main="Correlation plot", cex=1.2)
+
+#Is there a correlation between the topic's popularity and external events or news?
+df_filtered <- subset(people_df, name == 'Martin Luther King Jr.')
+df_filtered$date <- as.Date(df_filtered$date, format = "%Y-%m-%d")
+ggplot(df_filtered, aes(x = date, y = relative_popularity)) + geom_line() + labs(title = "Line Graph for Martin Luther King Jr.", x = "Year", y = "relative_popularity")
+ggplot(df_filtered, aes(x = date, y = page_views)) + geom_line() + labs(title = "Line Graph for Martin Luther King Jr.", x = "Year", y = "page_views")
+
+#Which state has the highest number of famous person each year? 
+df_filtered2 <- subset(people_df, popular == 'yes')
+grouped_df <- df_filtered2 %>% group_by(year, nationality) %>% 
+  summarise(unique_count = n_distinct(name))
+
+most_popular_by_year <- grouped_df %>%
+  group_by(year) %>%
+  filter(unique_count == max(unique_count))
+
+print(most_popular_by_year)
+
+# Identify individuals with unusually high popularity
+df_filtered4 <- people_df %>%
+  group_by(name) %>%
+  summarise(popularity_proportion = sum(popular == 'yes') / n())
+print(df_filtered4[df_filtered4$popularity_proportion >=1,])
+
+# Identify individuals with unusually low popularity
+df_filtered5 <- people_df %>%
+  group_by(name) %>%
+  summarise(popularity_proportion = sum(popular == 'low') / n())
+print(df_filtered5[df_filtered5$popularity_proportion >=1,])
+
+#Who are the top individuals popular in terms of Google trends relative popularity on each year
+top_individuals <- people_df %>%
+  group_by(year) %>%
+  filter(relative_popularity == max(relative_popularity))
+print(top_individuals)
+
+#Who are the top individuals popular in terms of wikipedia data on each year
+top_individuals <- people_df %>%
+  group_by(year) %>%
+  filter(page_views == max(page_views))
+print(top_individuals)
+
+ggplot(people_df, aes(x = profession, fill=popular)) +
+  geom_bar(position = 'dodge')
+```
+# Model Train-Test
+```{r}
+library(caret)
+library(rpart)
+library(rpart.plot)
+# Train-Test split 80/20 ratio
+set.seed(123)
+split_index <- createDataPartition(y=people_df$popular, p=0.8,list=FALSE)
+train_df <- people_df[split_index,]
+test_df <- people_df[-split_index,]
+print(nrow(train_df))
+print(nrow(test_df))
+
+model <- rpart(popular~. -name, data = train_df)
+rpart.plot(model)
+print(varImp(model))
+test_prediction<-predict(model, newdata=test_df,type='class')
+confusionMatrix(test_prediction,test_df$popular)
+
+train_prediction<-predict(model, newdata=train_df,type='class')
+confusionMatrix(train_prediction,train_df$popular)
+```
