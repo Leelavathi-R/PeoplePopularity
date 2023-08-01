@@ -17,6 +17,12 @@ This project explores and performs EDA to identify how information dissemination
 - Nationality
 - Profession
 - Popular
+  
+## Exploratory Data Analysis
+-- Is there a link between the person’s popularity with external events or news?
+- Which profession dominates the digital world?
+- Is there an individual with unusually high popularity?
+- Which state has the highest number of famous people each year?
 
 ## Output: 
 - Training Accuracy: 99.3%
