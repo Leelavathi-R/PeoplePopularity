@@ -24,6 +24,7 @@ Found answers to the following questions with EDA:
 - Which profession dominates the digital world?
 - Is there an individual with unusually high popularity?
 - Which state has the highest number of famous people each year?
+- Who are the top individuals popular in terms of Google trends relative popularity & page views each year?
 
 ## Output: 
 - Training Accuracy: 99.3%
